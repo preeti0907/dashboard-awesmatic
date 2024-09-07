@@ -18,7 +18,7 @@ import { Input } from "../input";
 import { Button } from "../button";
 
 const formSchema = z.object({
-    name: z.string().min(1),
+    name: z.string().min(1, {message: 'Store name cannnot be empty'}),
 });
 export const StoreModal = () => {
     const storeModal = useStoreModal();
