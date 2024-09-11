@@ -243,7 +243,7 @@ export default function RootLayout({
                     className="overflow-hidden rounded-full"
                   >
                     <Image
-                      src="/placeholder-user.jpg"
+                      src="/Profile_avatar_placeholder_large.png"
                       width={36}
                       height={36}
                       alt="Avatar"

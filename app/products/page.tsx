@@ -1,6 +1,6 @@
-import React from 'react'
 
-import { supabase } from '@/lib/supabaseClient';
+
+import React from 'react'
 
 
 import {
@@ -36,38 +36,45 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-import {
-    File,
-    Home,
-    LineChart,
-    ListFilter,
-    MoreHorizontal,
-    Package,
-    Package2,
-    PanelLeft,
-    PlusCircle,
-    Search,
-    Settings,
-    ShoppingCart,
-    Users2,
-} from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { ListFilter } from "lucide-react"
 import { Button } from '@/components/ui/button'
-import Image from 'next/image'
 import { useState } from 'react';
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination"
+import { getProducts } from '../api/products';
 
-async function  page() {
+
+async function page({ searchParams }: { searchParams: { page?: string, q?: string } }) {
+
+    const page = searchParams?.page ? parseInt(searchParams.page) : 1;
+    const searchQuery = searchParams?.q ? searchParams.q : '';
+    const pageSize = 10;
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize - 1;
     
-    const { data: products, error } = await supabase.from('products').select('*');
-    if (error) {
-        return <p>Error loading products: {error.message}</p>;
-      }
+
+    const products = await getProducts(page, searchQuery, pageSize, start, end);
+    
+    // console.log(products);
+    const totalPages = Math.ceil((products?.count ?? 0) / pageSize);
+ 
     return (
         <>
             <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-            {products.map((store) => (
-          <li key={store.id}>{store.product_name}</li>
-        ))}
+                
+
+                <form action="" method="GET" className="mb-4">
+                    <input type="text" name="q" defaultValue={searchQuery} placeholder="Search products..." className="p-2 border border-gray-300" />
+                    <button type="submit" className="ml-2 p-2 bg-blue-500 text-white"> Search </button>
+                </form>
+
                 <Tabs defaultValue="all">
                     <div className="flex items-center">
                         <TabsList>
@@ -100,107 +107,73 @@ async function  page() {
                                     </DropdownMenuCheckboxItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                            <Button size="sm" variant="outline" className="h-8 gap-1">
-                                <File className="h-3.5 w-3.5" />
-                                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                                    Export
-                                </span>
-                            </Button>
-
-                            <Button size="sm" className="h-8 gap-1">
-                                <PlusCircle className="h-3.5 w-3.5" />
-                                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                                    Add Product
-                                </span>
-                            </Button>
                         </div>
                     </div>
                     <TabsContent value="all">
                         <Card x-chunk="dashboard-06-chunk-0">
-                            <CardHeader>
-                                <CardTitle>Products</CardTitle>
-                                <CardDescription>
-                                    Manage your products and view their sales performance.
-                                </CardDescription>
-                            </CardHeader>
                             <CardContent>
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead className="hidden w-[100px] sm:table-cell">
-                                                <span className="sr-only">Image</span>
-                                            </TableHead>
+                                            <TableHead>Id</TableHead>
                                             <TableHead>Name</TableHead>
-                                            <TableHead>Status</TableHead>
                                             <TableHead className="hidden md:table-cell">
-                                                Price
+                                                MRP
                                             </TableHead>
                                             <TableHead className="hidden md:table-cell">
-                                                Total Sales
+                                                Sale Price
                                             </TableHead>
                                             <TableHead className="hidden md:table-cell">
-                                                Created at
-                                            </TableHead>
-                                            <TableHead>
-                                                <span className="sr-only">Actions</span>
+                                                Brand
                                             </TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        <TableRow>
-                                            <TableCell className="hidden sm:table-cell">
-
-                                                <Image
-                                                    alt="Product image"
-                                                    className="aspect-square rounded-md object-cover"
-                                                    height="64"
-                                                    src="/placeholder.svg"
-                                                    width="64"
-                                                />
-                                            </TableCell>
-                                            <TableCell className="font-medium">
-                                                Laser Lemonade Machine
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline">Draft</Badge>
-                                            </TableCell>
-                                            <TableCell className="hidden md:table-cell">
-                                                $499.99
-                                            </TableCell>
-                                            <TableCell className="hidden md:table-cell">
-                                                25
-                                            </TableCell>
-                                            <TableCell className="hidden md:table-cell">
-                                                2023-07-12 10:42 AM
-                                            </TableCell>
-                                            <TableCell>
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button
-                                                            aria-haspopup="true"
-                                                            size="icon"
-                                                            variant="ghost"
-                                                        >
-                                                            <MoreHorizontal className="h-4 w-4" />
-                                                            <span className="sr-only">Toggle menu</span>
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                                                        <DropdownMenuItem>Delete</DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </TableCell>
-                                        </TableRow>
+                                        {products?.products?.map((product) => (
+                                            <TableRow key={product.id}>
+                                                <TableCell>
+                                                    {product.apin}
+                                                </TableCell>
+                                                <TableCell className="font-medium inline-block w-[1000px]">
+                                                    <p className=' line-clamp-1'>{product.product_name}</p>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {product.mrp}
+                                                </TableCell>
+                                                <TableCell className="hidden md:table-cell">
+                                                    {product.selling_price}
+                                                </TableCell>
+                                                <TableCell className="hidden md:table-cell">
+                                                    {product.brand?.name}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
                                     </TableBody>
                                 </Table>
+
                             </CardContent>
                             <CardFooter>
-                                <div className="text-xs text-muted-foreground">
-                                    Showing <strong>1-10</strong> of <strong>32</strong>{" "}
-                                    products
-                                </div>
+
+                                <Pagination>
+                                    <PaginationContent>
+                                        {page > 1 ? 
+                                        <PaginationItem>
+                                            <PaginationPrevious href={`?page=` + (page - 1) + `&q=${searchQuery}`}/>
+                                        </PaginationItem>
+                                        : undefined}
+                                        
+                                        <div className="text-xs text-muted-foreground">
+                                            Page <strong>{page}</strong> of <strong>{totalPages} </strong>{" "}products
+                                        </div>
+                                        {page < totalPages ? 
+                                        <PaginationItem>
+                                            <PaginationNext href={`?page=` + (page + 1) + `&q=${searchQuery}`} />
+                                        </PaginationItem>
+                                        : undefined} 
+                                    </PaginationContent>
+                                </Pagination>
+
+                              
                             </CardFooter>
                         </Card>
                     </TabsContent>
